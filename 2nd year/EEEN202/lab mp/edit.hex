@@ -1,0 +1,74 @@
+// initialise the display
+
+// set 8-bit/2-line
+MOV A, #38
+ACALL COMWRT  // jump to sub routine 1 at 36h = COMNWRT
+ACALL DELAY  // jump to sub routine 3 at 50h = DELAY
+
+// contrast
+MOV A, #0E
+ACALL COMWRT
+ACALL DELAY
+
+// clear
+MOV A, #01
+ACALL COMWRT
+ACALL DELAY
+
+// Entry mode set
+MOV A, #06
+ACALL COMWRT
+ACALL DELAY
+
+// start typing WORLD (HELLO in comments)
+
+// W
+MOV  A, #57  // #48 <-- H
+ACALL DATAWRT  // jump to sub routine 3 at 43h = DELAY
+ACALL DELAY
+
+//O
+MOV   A, #4F   // #45 <-- E
+ACALL DATAWRT
+ACALL DELAY
+
+//R
+MOV   A, #52   // #4C <-- L
+ACALL DATAWRT
+ACALL DELAY
+
+// L
+MOV   A, #4C
+ACALL DATAWRT
+ACALL DELAY
+
+//D
+MOV   A, #44   // #4F <-- O
+ACALL DATAWRT
+SJMP  FE    // jump back 2 signed int (2s compliment)
+
+COMWRT: //start of routine 1 36h
+    MOV   P1, A        //P1 = i;
+    CLR   A0           //D_I = 0; instruction
+    CLR   A1           //R_W = 0; write
+    SETB  A2           //E = 1;
+    ACALL DELAY        //Delay(1);
+    CLR   A2           //E = 0;
+    RET
+
+DATAWRT: // start routine 2 43h
+    MOV   P1, A        //P1 = i;
+    SETB  A0           //D_I = 1; data  #A2 = P2.0
+    CLR   A1           //R_W = 0; write
+    SETB  A2           //E = 1;
+    ACALL DELAY        //Delay(1);
+    CLR   A2           //E = 0;
+    RET
+
+DELAY:  // start of routine 3 50h
+    MOV   R3, #32
+    MOV   R4, #FF
+    DJNZ  R4, FE        //jump back 2 signed int (2s compliment)
+    DJNZ  R3, FA        //jump back 4 signed int (2s compliment)
+    RET
+
