@@ -6,7 +6,7 @@ OVERVIEW:
     
 
 TODO:
-    - Get ftp connection working
+    + Get ftp connection working
     - Get intial wifi/password setup
     - Setup EEPROM storage for critical values like passwords
     - (optional) setup bluetooth modification of values instead of serial
