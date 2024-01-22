@@ -10,8 +10,9 @@
 #include <Adafruit_SSD1306.h>
 #include <splash.h>
 
-#define DEBUG  1
 
+// 1 Activate and 0 deactivate debug lines
+#define DEBUG  1
 #if DEBUG == 1
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
@@ -21,7 +22,7 @@
 #endif
 
 
-#define EEPROM_SIZE 64
+#define EEPROM_SIZE 512   //esp32 
 
 char wifi_ssid[64]; //63 + 1 for terminator char 
 char wifi_pass[64]; //it is 32 but choosing 63 to fit with the rest of the variables
@@ -33,9 +34,11 @@ char ftp_pass[64];
 
 char ftp_path[200];  //gives headroom for file renaming lim 255 
 
+char read_freq = 1;  // readings per hr
+
 BMP280 bthSen;      //barometer, temperature and humidity sensor
 SCD30 cSen;         // co2 sensor
-ESP32_FTPClient ftp (ftp_server,ftp_user,ftp_pass, 5000, 2);  //initialising here to keep it global for now.
+ESP32_FTPClient ftp(ftp_server,ftp_user,ftp_pass, 5000, 2);  //initialising here to keep it global for now.
 Adafruit_SSD1306 disp;  // oled display
 
 void setup() {
