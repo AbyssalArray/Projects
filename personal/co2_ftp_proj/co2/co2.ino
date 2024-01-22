@@ -10,27 +10,48 @@
 #include <Adafruit_SSD1306.h>
 #include <splash.h>
 
+#define DEBUG  1
 
-#define WIFI_SSID ""
-#define WIFI_PASS ""
+#if DEBUG == 1
+#define debug(x) Serial.print(x)
+#define debugln(x) Serial.println(x)
+#else
+#define debug(x)
+#define debugln(x)
+#endif
 
-char ftp_server[] = "";
-char ftp_user[]   = "";
-char ftp_pass[]   = "";
 
-BMP280 bmp280;
-SCD30 airSensor;
-ESP32_FTPClient ftp (ftp_server,ftp_user,ftp_pass, 5000, 2);
-SSD1306 display;
+#define EEPROM_SIZE 64
+
+char wifi_ssid[64]; //63 + 1 for terminator char 
+char wifi_pass[64]; //it is 32 but choosing 63 to fit with the rest of the variables
+
+// couldnt find clear limits so setting to 63 chars
+char ftp_server[64];
+char ftp_user[64];
+char ftp_pass[64];
+
+char ftp_path[200];  //gives headroom for file renaming lim 255 
+
+BMP280 bthSen;      //barometer, temperature and humidity sensor
+SCD30 cSen;         // co2 sensor
+ESP32_FTPClient ftp (ftp_server,ftp_user,ftp_pass, 5000, 2);  //initialising here to keep it global for now.
+Adafruit_SSD1306 disp;  // oled display
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   delay(10);
   Wire.begin();
-  display.begin();
-  bmp280.begin();
-  airSensor.begin();
+  disp.begin();
+  bthSen.begin();
+  cSen.begin();
+
+  if (!EEPROM.begin(EEPROM_SIZE))
+  {
+    debugln("failed to initialise EEPROM"); 
+    // need to add GUI error here
+    while(1) delay(1000000);
+  }
 
 }
 
