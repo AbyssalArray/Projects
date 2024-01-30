@@ -26,6 +26,8 @@
 #define EEPROM_SIZE 512  //esp32
 #define M_STR_LEN 64
 #define M_PATH_LEN 200
+#define WIFI_TIMEOUT 5000
+#define WIFI_WAIT 500
 
 typedef struct {
   char wifi_ssid[M_STR_LEN];  //63 + 1 for terminator char
@@ -36,7 +38,7 @@ typedef struct {
   char ftp_user[M_STR_LEN];
   char ftp_pass[M_STR_LEN];
 
-  char ftp_path[M_PATH_LEN];  //gives headroom for file renaming lim 255
+  char ftp_path[M_PATH_LEN];  //gives headroom for file renaming lim 255 also a future feature
 
   char read_freq = 1;                                          // readings per hr
 } settings_t;
@@ -44,14 +46,14 @@ settings_t set;
 
 BMP280 bthSen;                                               //barometer, temperature and humidity sensor
 SCD30 cSen;                                                    // co2 sensor
-ESP32_FTPClient* ftp = NULL;  //initialising here to keep it global for now.
+ESP32_FTPClient* ftp = NULL;                                    // used as pointer to have the ability to change the credentials
 Adafruit_SSD1306 disp;                                         // oled display
 Preferences mem;
 
-void load_set();
-void update_set();
-void save_set();
-void check_connect();
+int load_set();
+int update_set();
+int save_set();
+int check_connect();
 
 void setup() {
   mem.begin("co2", false);
@@ -64,10 +66,37 @@ void setup() {
   bthSen.begin();
   cSen.begin();
 }
-void save_set() {
-  mem.putBytes("settings", &set, sizeof(set));
 
+int load_set() {
+  mem.getBytes("settings", &set, sizeof(set));
+  return 1;
 }
+int save_set() {
+  mem.putBytes("settings", &set, sizeof(set));
+  return 1;
+}
+int check_connect() {
+  // connect to wifi, start timer, if passes timeout credentials are invalid
+  WiFi.begin(set.wifi_ssid, set.wifi_pass);
+  long int tStart = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    if (millis() - tStart > WIFI_TIMEOUT)
+      return 0;
+    else
+     delay(WIFI_WAIT);
+  }
+
+  // do same for ftp server
+  ftp = new ESP32_FTPClient(set.ftp_server, set.ftp_user, set.ftp_pass);
+  ftp->OpenConnection();
+  if (!ftp->isConnected())
+    return 0;
+
+  //ensure the state of connection is known
+  ftp->CloseConnection();
+  return 1;
+}
+
 
 void loop() {
   // put your main code here, to run repeatedly:
