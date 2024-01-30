@@ -67,14 +67,32 @@ void setup() {
   cSen.begin();
 }
 
+/**
+  loads settings from permament memory
+  returns 1 if success
+  returns 0 if no settings found in memory (first run)
+  setNum 
+**/
 int load_set() {
-  mem.getBytes("settings", &set, sizeof(set));
-  return 1;
+  size_t setNum = mem.getBytes("settings", &set, sizeof(set));
+  //check_connect();  could be added
+  if (setNum)
+    return 1;
+  return 0;
 }
 int save_set() {
   mem.putBytes("settings", &set, sizeof(set));
   return 1;
 }
+
+/**
+  Takes the credentials stored in settings (set)
+  and checks if they are valid in the current location
+  returns 0 if unable to connect
+  returns 1 if both ftp and wifi connects
+
+  plan to be changed to 0 = pass, 1 = ftp fail, 2 = wifi fail
+**/
 int check_connect() {
   // connect to wifi, start timer, if passes timeout credentials are invalid
   WiFi.begin(set.wifi_ssid, set.wifi_pass);
