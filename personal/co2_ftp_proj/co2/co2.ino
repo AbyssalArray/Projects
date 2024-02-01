@@ -30,8 +30,8 @@
 #define WIFI_WAIT 500
 
 typedef struct {
-  char wifi_ssid[M_STR_LEN];  //63 + 1 for terminator char
-  char wifi_pass[M_STR_LEN];  //it is 32 but choosing 63 to fit with the rest of the variables
+  char wifi_ssid[M_STR_LEN];  
+  char wifi_pass[M_STR_LEN];  
 
   // couldnt find clear limits so setting to 63 chars
   char ftp_server[M_STR_LEN];
@@ -50,10 +50,11 @@ ESP32_FTPClient* ftp = NULL;                                    // used as point
 Adafruit_SSD1306 disp;                                         // oled display
 Preferences mem;
 
-int load_set();
-int update_set();
-int save_set();
-int check_connect();
+int loadSet();
+int updateSet();
+int saveSet();
+int checkConnect();
+int readWord(char *buffer, int buf_len);
 
 void setup() {
   mem.begin("co2", false);
@@ -69,18 +70,18 @@ void setup() {
 
 /**
   loads settings from permament memory
-  returns 1 if success
-  returns 0 if no settings found in memory (first run)
+  RETURN: 1 if success
+  RETURN: 0 if no settings found in memory (first run)
   setNum 
 **/
-int load_set() {
+int loadSet() {
   size_t setNum = mem.getBytes("settings", &set, sizeof(set));
   //check_connect();  could be added
   if (setNum)
     return 1;
   return 0;
 }
-int save_set() {
+int saveSet() {
   mem.putBytes("settings", &set, sizeof(set));
   return 1;
 }
@@ -88,12 +89,12 @@ int save_set() {
 /**
   Takes the credentials stored in settings (set)
   and checks if they are valid in the current location
-  returns 0 if unable to connect
-  returns 1 if both ftp and wifi connects
+  RETURN: 0 if unable to connect
+  RETURN: 1 if both ftp and wifi connects
 
-  plan to be changed to 0 = pass, 1 = ftp fail, 2 = wifi fail
+  TODO: change to 0 = pass, 1 = ftp fail, 2 = wifi fail
 **/
-int check_connect() {
+int checkConnect() {
   // connect to wifi, start timer, if passes timeout credentials are invalid
   WiFi.begin(set.wifi_ssid, set.wifi_pass);
   long int tStart = millis();
@@ -115,6 +116,25 @@ int check_connect() {
   return 1;
 }
 
+int updateSet() {
+  // create 
+}
+
+/**
+  will attempt to fill given buffer from serial monitor
+  while loop freezes the program to give user time to write an answer
+  TODO: add timeout for user input or some form of escape.
+  TODO: switch to bluetooth over serial.
+  RETURN: number of characters inputted
+**/
+int readWord(char *buffer, int buf_len) {
+  
+  while (Serial.available() <= 0);
+  memset(buffer, 0, sizeof(buffer));
+  int i = Serial.readBytesUntil('\n',words, (size_t)255);
+  words[i] += '\0';
+  return i;
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
