@@ -30,8 +30,8 @@
 #define WIFI_WAIT 500
 
 typedef struct {
-  char wifi_ssid[M_STR_LEN];  
-  char wifi_pass[M_STR_LEN];  
+  char wifi_ssid[M_STR_LEN];
+  char wifi_pass[M_STR_LEN];
 
   // couldnt find clear limits so setting to 63 chars
   char ftp_server[M_STR_LEN];
@@ -40,14 +40,14 @@ typedef struct {
 
   char ftp_path[M_PATH_LEN];  //gives headroom for file renaming lim 255 also a future feature
 
-  char read_freq = 1;                                          // readings per hr
+  char read_freq = 1;  // readings per hr
 } settings_t;
 settings_t set;
 
-BMP280 bthSen;                                               //barometer, temperature and humidity sensor
-SCD30 cSen;                                                    // co2 sensor
-ESP32_FTPClient* ftp = NULL;                                    // used as pointer to have the ability to change the credentials
-Adafruit_SSD1306 disp;                                         // oled display
+BMP280 bthSen;                //barometer, temperature and humidity sensor
+SCD30 cSen;                   // co2 sensor
+ESP32_FTPClient *ftp = NULL;  // used as pointer to have the ability to change the credentials
+Adafruit_SSD1306 disp;        // oled display
 Preferences mem;
 
 int loadSet();
@@ -61,7 +61,7 @@ void setup() {
   Serial.begin(115200);
   delay(10);
 
-  
+
   Wire.begin();
   disp.begin();
   bthSen.begin();
@@ -102,9 +102,8 @@ int checkConnect() {
     if (millis() - tStart > WIFI_TIMEOUT)
       return 0;
     else
-     delay(WIFI_WAIT);
+      delay(WIFI_WAIT);
   }
-
   // do same for ftp server
   ftp = new ESP32_FTPClient(set.ftp_server, set.ftp_user, set.ftp_pass);
   ftp->OpenConnection();
@@ -117,22 +116,31 @@ int checkConnect() {
 }
 
 int updateSet() {
-  // create 
+  // create
 }
 
 /**
   will attempt to fill given buffer from serial monitor
   while loop freezes the program to give user time to write an answer
+  PARAM: timeout > 0 (millis) Max 32,767, ELSE: no timeout is used
   TODO: add timeout for user input or some form of escape.
   TODO: switch to bluetooth over serial.
   RETURN: number of characters inputted
 **/
-int readWord(char *buffer, int buf_len) {
+int readWord(char *buffer, int buf_len, int timeout = 0) {
+  // if a negative timeout value is selected then do not use timeout code 
+  if (timeout > 0)
+    long int tStart = millis();
+    while (Serial.available() <= 0)
+      if (millis() - tStart > timeout)
+        return 0;
+  else
+    while (Serial.available() <= 0);
   
-  while (Serial.available() <= 0);
   memset(buffer, 0, sizeof(buffer));
-  int i = Serial.readBytesUntil('\n',words, (size_t)255);
+  int i = Serial.readBytesUntil('\n', words, (size_t)255);
   words[i] += '\0';
+
   return i;
 }
 
